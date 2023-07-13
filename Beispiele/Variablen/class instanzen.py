@@ -1,3 +1,11 @@
+#!/usr/bin/env python3
+# In diesem Beispiel wird die Variable self.value innerhalb der Klasse gesetzt. 
+# Die Variable self.value ist eine Instanzvariable und kann nur von der Instanz geändert werden.
+# Innerhalb der Klasse gibt es allerdings Funktionen mit denen die Variable geändert werden kann.
+# Zusätzlich zu dem Beispiel class.py werden hier von der Klasse zwei Instanzen erstellt.
+# Die Instanzen sind zwei verschiedene Objekte, die unabhängig voneinander sind.
+# Die Instanzen haben die gleichen Funktionen, aber unterschiedliche Werte.
+
 class MyVariable:
     def __init__(self, value):
         self.value = value

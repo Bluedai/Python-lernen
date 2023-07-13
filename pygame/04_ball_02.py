@@ -1,16 +1,31 @@
 import sys, pygame
+
+# Spiel initialisieren
 pygame.init()
 size = width, height = 1280, 768
-speed = 100 # Pixel pro Sekunde
-x, y = 1, 1
-black = 0, 0, 0
-clock = pygame.time.Clock()
-last_time = pygame.time.get_ticks()
 screen = pygame.display.set_mode(size)
 
+# Variablen definieren
+
+# Farben definieren
+black = 0, 0, 0 # Farbe schwarz
+blue = 0, 0, 255 # Farbe blau
+yellow = 255, 255, 0 # Farbe gelb
+
+# Variablen für die Bewegung
+speed = 100 # Pixel pro Sekunde die sich der Ball bewegt
+x, y = 1, 1 # Richtung in der sich der Ball bewegt ( initial rechts unten)
+last_time = pygame.time.get_ticks()
+
+# Variablen für die FPS
+clock = pygame.time.Clock()
+
+# Sprites
+# Ball laden
 ball = pygame.image.load("intro_ball.gif")
 ballrect = ball.get_rect()
 
+# Spiel Schleife
 while True:
     for event in pygame.event.get():
         if event.type == pygame.QUIT: sys.exit()
@@ -54,6 +69,6 @@ while True:
     text = font.render("FPS: " + str(round(clock.get_fps())), True, pygame.Color("coral"))
     # Text ausgeben in der Farbe coral
     screen.blit(text, (0, 0))
-    clock.tick(60)
+    clock.tick(144)
 
     pygame.display.flip()
