@@ -1,5 +1,14 @@
 # https://pygame-gui.readthedocs.io/en/latest/index.html
 
+
+   # FPS auf dem Bildschirm ausgeben
+    # print FPS to screen
+    font = pygame.font.SysFont("Arial", 18)
+    text = font.render("FPS: " + str(round(clock.get_fps())), True, pygame.Color("coral"))
+    # Text ausgeben in der Farbe coral
+    screen.blit(text, (0, 0))
+
+
 # screen = pygame.display.set_mode((displayInfo.current_w, displayInfo.current_h), pygame.FULLSCREEN, display=0)
 
 # Bildschirmauflösung des Desktops ermitteln
