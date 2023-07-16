@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
 
+# Snippets 
+        # debugfont = pygame.font.SysFont("Verdana", 18, bold=False)
+        # debugtext = debugfont.render(str(self.farbe)+str(self.typ), True, weiß)
+        # screen.blit(debugtext, (100,100))
+
 import sys
 # import time
 import random
@@ -11,7 +16,8 @@ import pygame
 pygame.init()
 
 # Konfiguration
-Vollbild=False
+Vollbild = False
+displaynumber = 1
 
 # Farben definieren
 schwarz = 0, 0, 0 # Farbe schwarz
@@ -19,18 +25,11 @@ blau = 0, 0, 255 # Farbe blau
 gelb = 255, 255, 0 # Farbe gelb
 weiß = 255, 255, 255 # Farbe weiß
 rot = 255, 0, 0 # Farbe rot
-regenbogen = [(255, 0, 0),    # Rot
-          (0, 255, 0),    # Grün
-          (0, 0, 255),    # Blau
-          (255, 255, 0),  # Gelb
-          (255, 0, 255),  # Magenta
-          (0, 255, 255),  # Cyan
-          (128, 0, 0),    # Dunkelrot
-          (0, 128, 0),    # Dunkelgrün
-          (0, 0, 128),    # Dunkelblau
-          (128, 128, 128) # Grau
-         ]
-
+grün = 0, 255, 0 # Farbe grün
+magenta = 255, 0, 255 # Farbe magenta
+cyan = 0, 255, 255 # Farbe cyan
+grau = 128, 128, 128 # Farbe grau
+regenbogen = [rot, gelb, grün, blau, magenta, cyan] # Farben des Regenbogens
 
 # Farben für das Spiel
 farbe_background = schwarz
@@ -39,6 +38,7 @@ farbe_ball = blau
 farbe_line = gelb
 farbe_fps = gelb
 farbe_fps_background = farbe_background
+farbe_punkte = weiß
 
 # Variablen für die FPS
 view_fps = False
@@ -47,6 +47,8 @@ clock = pygame.time.Clock()
 # Variablen für die Bewegung
 dt = 0 
 
+# Sonstige Variablen
+Leinwand = (800, 600) # 
 
 # Funktionen
 # gestrichelte Linie zeichnen
@@ -86,7 +88,7 @@ def Spielfeld_zeichnen():
     # Rahmen
     pygame.draw.rect(screen, farbe_line, ( 0,0,screen.get_width(),screen.get_height()), int(randabstand/1.5) )
     # Netz
-    netzstart = (screen.get_width() / 2 , 0)
+    netzstart = (screen.get_width() / 2 , 35)
     netzende = (screen.get_width() / 2, screen.get_height())
     if screen.get_height() < 500:
         la = (10,5)
@@ -115,14 +117,36 @@ class Spieler:
             self.position.x -= int(300 * dt)
         if keys[self.tasten[3]]:
             self.position.x += int(300 * dt)
+    def größe_ändern(self, größe):
+        self.player_höhe = größe[0]
+        self.player_breite = größe[1]
 
 class Ball:
     def __init__(self, farbe, position):
         self.radius = 10
         self.farbe = farbe
-        self.position = position.copy()
+        self.einwurf('random', position)
+
+    def einwurf(self,richtung, position):
         self.geschwindigkeit = 400
-        self.angle = random.uniform(-math.pi, math.pi)
+        self.position = position.copy()
+        choice = random.choice(['oben', 'unten'])
+        if richtung == 'links':
+            if choice == 'oben':
+                self.angle = random.uniform(-math.pi, -(math.pi/5*4))
+                print('links oben: ', self.angle)
+            else: # links unten 
+                self.angle = random.uniform(math.pi, math.pi/5*4)
+                print('links unten: ', self.angle)
+        elif richtung == 'rechts':
+            if choice == 'oben':
+                self.angle = random.uniform(-(math.pi/5), 0)
+                print('rechts oben: ', self.angle)
+            else: # rechts unten
+                self.angle = random.uniform(0, math.pi/5)
+                print('rechts unten: ', self.angle)
+        else:
+            self.einwurf(random.choice(['links', 'rechts']), position)
 
     def zeichnen(self):
         pygame.draw.circle(screen, self.farbe, (int(self.position.x), int(self.position.y)), self.radius)
@@ -135,18 +159,30 @@ class Ball:
         # Aktualisiere die Position des Balls
         self.position.x += dx
         self.position.y += dy
+        typ = SpielPunkte.get_SpielStatus()
 
         # Prüfe, ob der Ball rechts das Spielfeld verlässt
         if self.position.x > screen.get_width() - randabstand - self.radius:
-            self.position.x = screen.get_width() - randabstand - self.radius 
-            # Neuen Winkel setzen (Einfallswinkel umkehren)
-            self.angle = math.pi - self.angle
+            if typ == 'demo':
+                self.position.x = screen.get_width() - randabstand - self.radius 
+                # Neuen Winkel setzen (Einfallswinkel umkehren)
+                self.angle = math.pi - self.angle
+            elif typ in ['normal']:
+                SpielPunkte.add_Punkt('links')
+                SpielPunkte.substract_RestBälle(1)
+                self.einwurf('links', pygame.Vector2(screen.get_width() / 2, screen.get_height() / 2) )
+
 
         # Prüfe, ob der Ball links das Spielfeld verlässt
         if self.position.x < 0 + randabstand + self.radius:
-            self.position.x = 0 + randabstand + self.radius 
-            # Neuen Winkel setzen (Einfallswinkel umkehren)
-            self.angle = math.pi - self.angle
+            if typ == 'demo':
+                self.position.x = 0 + randabstand + self.radius 
+                # Neuen Winkel setzen (Einfallswinkel umkehren)
+                self.angle = math.pi - self.angle
+            elif typ in ['normal']:
+                SpielPunkte.add_Punkt('rechts')
+                SpielPunkte.substract_RestBälle(1)
+                self.einwurf('rechts', pygame.Vector2(screen.get_width() / 2, screen.get_height() / 2) )
 
         # Prüfe, ob der Ball oben das Spielfeld verlässt
         if self.position.y < 0 + randabstand + self.radius:
@@ -171,7 +207,77 @@ class Ball:
                     else:
                         if spieler.position.x < screen.get_width()/2: 
                             self.angle = math.pi - self.angle
+class Spielumgebung:
+    def __init__(self,typ):
+        self.typ = typ
+        self.set_SpielStatus(typ)
 
+    def set_SpielStatus(self,typ):
+        self.typ = typ
+        if self.typ in ["init","demo","normal"]:
+            self.Spieler_Links = 0
+            self.Spieler_Rechts = 0
+            self.restBälle = 3
+        
+        if self.typ == "init":
+            self.farbe = grau
+        elif self.typ == "demo":
+            self.farbe = farbe_punkte
+        elif self.typ == "normal":
+            self.farbe = farbe_punkte
+        elif self.typ == "gameover":
+            self.farbe = grau
+
+    def get_SpielStatus(self):
+        return self.typ
+    
+    def add_Punkt(self,spieler):
+        if spieler == "links":
+            self.Spieler_Links += 1
+        elif spieler == "rechts":
+            self.Spieler_Rechts += 1
+
+    def substract_RestBälle(self,anzahl):
+        global rungame, spieler_links, spieler_rechts
+        self.restBälle -= anzahl
+        if self.restBälle == 0:
+            rungame = False
+            spieler_links = None
+            spieler_rechts = None
+            self.set_SpielStatus("gameover")
+
+    def zeichnen(self):
+        font = pygame.font.SysFont("Verdana", 104, bold=False)
+        ballfont = pygame.font.SysFont("Verdana", 24, bold=False)
+        PunkteLinks  = font.render(str(self.Spieler_Links), True, self.farbe)
+        PunkteRechts = font.render(str(self.Spieler_Rechts), True, self.farbe)
+        restBälle = ballfont.render(str(self.restBälle), True, self.farbe)
+        diff_Links = 110
+        diff_Rechts = 47
+        screen.blit(PunkteLinks, (screen.get_width()/2-diff_Links, 10))
+        screen.blit(PunkteRechts, (screen.get_width()/2+diff_Rechts, 10))
+        
+        restbälle_width, restbälle_height = restBälle.get_size()
+        restbälle_position = (screen.get_width()//2 - restbälle_width//2, (35-randabstand)//2 + randabstand -4 - restbälle_height//2)
+        screen.blit(restBälle, restbälle_position)
+
+def änder_auflösung():
+    global randabstand,player_höhe,player_breite,player_A_pos,player_B_pos,Leinwand
+
+    randabstand = screen.get_width() * 0.01
+
+    # Variablen für Spieler
+    player_höhe = screen.get_height() // 8 
+    player_breite = player_höhe // 5
+    # Spieler A
+    player_A_pos = pygame.Vector2(randabstand , screen.get_height() / 2 - player_höhe / 2)
+    # Spieler B
+    player_B_pos = pygame.Vector2(screen.get_width() - randabstand - player_breite , screen.get_height() / 2 - player_höhe / 2)
+
+    # Aktuelle Auflösung speichern
+    Leinwand = (screen.get_width(), screen.get_height())
+
+        
 # FPS auf dem Bildschirm ausgeben
 def FPS_zeichnen():
     if view_fps:
@@ -188,30 +294,17 @@ def FPS_zeichnen():
 # Vollbild/Fenster erstellen
 if Vollbild:
     # Wenn man (0,0) angibt, dann wird die Bildschirmauflösung des Desktops verwendet
-    screen = pygame.display.set_mode((0,0), pygame.FULLSCREEN, display=1)
+    screen = pygame.display.set_mode((0,0), pygame.FULLSCREEN, display=displaynumber)
+
 else:
-    screen = pygame.display.set_mode((800,600),pygame.RESIZABLE, display=1)
+    screen = pygame.display.set_mode((800,600),pygame.RESIZABLE, display=displaynumber)
+änder_auflösung()
 pygame.display.set_caption("Bluedai Pong")
-
-# Muss leider hinter dem Fenster erstellen stehen, das muss noch aufgeräumt werden, das gehört hier nicht hin
-# Ausserdem müssen sich einige Werte dynamisch an die Fenstergröße anpassen
-
-# Variablen für Spieler
-player_höhe = 100
-player_breite = 20
-randabstand = screen.get_width() * 0.01
-
-# Spieler A
-player_A_pos = pygame.Vector2(randabstand , screen.get_height() / 2 - player_höhe / 2)
-
-# Spieler B
-player_B_pos = pygame.Vector2(screen.get_width() - randabstand - player_breite , screen.get_height() / 2 - player_höhe / 2)
-
-
 
 # Hauptschleife des Spiels
 running = True
 rungame = False
+SpielPunkte = Spielumgebung('init') # Punkte initialisieren 
 while running:
     # Clear screen
     screen.fill(farbe_background)
@@ -219,6 +312,13 @@ while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             sys.exit()
+        if event.type == pygame.VIDEORESIZE:
+            # Die Auflösung hat sich geändert
+
+            print("Alte Auflösung:", Leinwand)
+            print("Neue Auflösung:", event.w, event.h)
+            änder_auflösung()
+
 
     keys = pygame.key.get_pressed()
     
@@ -229,6 +329,7 @@ while running:
 
     # Spiel starten
     if keys[pygame.K_g]:
+        änder_auflösung()
         rungame = True
         Spieler_Liste = []
         Ball_Liste = []
@@ -238,12 +339,33 @@ while running:
         Spieler_Liste.append(spieler_rechts)
         ball = Ball(farbe_ball, pygame.Vector2(screen.get_width() / 2, screen.get_height() / 2) )
         Ball_Liste.append(ball)
+        SpielPunkte.set_SpielStatus('normal') # Startet ein Spiel mit 2 Spielern
+
+    if keys[pygame.K_F9]:
+        Vollbild = not Vollbild
+        if Vollbild:
+            screen = pygame.display.set_mode((0,0), pygame.FULLSCREEN, display=displaynumber)
+        else:
+            screen = pygame.display.set_mode((800,600),pygame.RESIZABLE, display=displaynumber)
+
+    if keys[pygame.K_F12]:
+        rungame = True
+        Spieler_Liste = []
+        Ball_Liste = []
+        spieler_links = Spieler(player_höhe, player_breite, farbe_spieler, player_A_pos, (pygame.K_w, pygame.K_s, pygame.K_a, pygame.K_d))
+        Spieler_Liste.append(spieler_links)
+        spieler_rechts = Spieler(player_höhe, player_breite, farbe_spieler, player_B_pos, (pygame.K_UP, pygame.K_DOWN, pygame.K_LEFT, pygame.K_RIGHT))
+        Spieler_Liste.append(spieler_rechts)
+        ball = Ball(farbe_ball, pygame.Vector2(screen.get_width() / 2, screen.get_height() / 2) )
+        Ball_Liste.append(ball)
+        SpielPunkte.set_SpielStatus('demo') # Startet ein Spiel mit 2 Spielern aber ohne Tore
 
     # Spiel stoppen
     if keys[pygame.K_h]:
         rungame = False
         spieler_links = None
         spieler_rechts = None
+        SpielPunkte.set_SpielStatus('gameover')
 
     # Spieler + Ball bewegen
     if rungame:
@@ -253,6 +375,9 @@ while running:
 
     # Spielfeld zeichnen
     Spielfeld_zeichnen()
+
+    # Punkte + Restbälle zeichnen
+    SpielPunkte.zeichnen()
 
     # Spieler + Ball zeichnen
     if rungame:
