@@ -11,6 +11,8 @@ import random
 import math
 import pygame
 # import pygame_gui
+import socket
+import threading
 
 # Spiel Engine initialisieren
 pygame.init()
@@ -18,6 +20,8 @@ pygame.init()
 # Konfiguration
 Vollbild = False
 displaynumber = 1
+host = '85.214.122.18'
+port = 12345
 
 # Farben definieren
 schwarz = 0, 0, 0 # Farbe schwarz
@@ -51,6 +55,8 @@ dt = 0
 Leinwand = (800, 600) # 
 
 # Funktionen
+
+
 # gestrichelte Linie zeichnen
 def gestrichelte_linie_zeichnen(farbe, start, ende, breite, länge, abstand):
     # Berechne die Länge der gesamten Linie
